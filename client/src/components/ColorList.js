@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { axiosWithAuth } from "../utils/axiosWithAuth";
+import ColorForm from "./ColorForm"
 
 const initialColor = {
   color: "",
@@ -23,15 +24,13 @@ const ColorList = ({ colors, updateColors }) => {
     .put(`http://localhost:5000/api/colors/${colorToEdit.id}`, colorToEdit)
     .then(res => {
       console.log(res);
-      setColorToEdit(initialColor);
-      colors && (colors.map(color => {
-        if(color.id === colorToEdit.id) {
-          updateColors(colorToEdit)
-        }
-      }))
-      this.props.history.push('/');
+      return axiosWithAuth().get(`http://localhost:5000/api/colors/`)
     })
-    .catch(err => console.log(err.response));
+    .then(res => {
+      updateColors(res.data)
+      setEditing(false)
+    })
+    .catch(err => console.log(err));
     // Make a put request to save your updated color
     // think about where will you get the id from...
     // where is is saved right now?
@@ -40,11 +39,15 @@ const ColorList = ({ colors, updateColors }) => {
   const deleteColor = e => {
     // make a delete request to delete this color
     e.preventDefault();
-    axios
+    axiosWithAuth()
       .delete(`http://localhost:5000/api/colors/${colorToEdit.id}`)
       .then(res => {
-        updateColors(res.data);
-        this.props.history.push('/');
+        console.log(res);
+        return axiosWithAuth().get(`http://localhost:5000/api/colors/`)
+      })
+      .then(res => {
+        updateColors(res.data)
+        setEditing(false)
       })
       .catch(err => console.log(err.response));
   };
@@ -56,7 +59,7 @@ const ColorList = ({ colors, updateColors }) => {
         {colors && (colors.map(color => (
           <li key={color.color} onClick={() => editColor(color)}>
             <span>
-              <span className="delete" onClick={() => deleteColor(color)}>
+              <span className="delete" onClick={deleteColor}>
                 x
               </span>{" "}
               {color.color}
@@ -98,7 +101,8 @@ const ColorList = ({ colors, updateColors }) => {
           </div>
         </form>
       )}
-      <div className="spacer" />
+      <div />
+        <ColorForm />
       {/* stretch - build another form here to add a color */}
     </div>
   );
